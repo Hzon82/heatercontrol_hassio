@@ -1,18 +1,43 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+alias: Heater Control
+sequence:
+  - condition: state
+    entity_id: switch.sonoff_1000c1aa57
+    state: "on"
+  - service: input_number.set_value
+    data:
+      value: "{{ state_attr('climate.heating_thermostat', 'temperature') }}"
+    target:
+      entity_id: input_number.initial_setpoint
+  - service: script.turn_on
+    data: {}
+    target:
+      entity_id: script.record_start_time
+  - delay:
+      hours: 0
+      minutes: 15
+      seconds: 0
+      milliseconds: 0
+  - service: climate.set_temperature
+    data:
+      temperature: "{{ states('sensor.ave_house_temp') | float - 1.5 }}"
+    target:
+      entity_id: climate.heating_thermostat
+  - delay:
+      hours: 0
+      minutes: 20
+      seconds: 0
+      milliseconds: 0
+  - condition: numeric_state
+    entity_id: sensor.ave_house_temp
+    above: input_number.initial_setpoint
+  - service: climate.set_temperature
+    data:
+      temperature: "{{ states('input_number.initial_setpoint') }}"
+    target:
+      entity_id: climate.heating_thermostat
+  - service: script.turn_on
+    data: {}
+    target:
+      entity_id: script.heater_control
+mode: single
 
-# Other files and folders
-.settings/
-
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
